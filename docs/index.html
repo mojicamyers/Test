@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset = "utf-8">
+<meta name = "viewport" content = "initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Working with layers</title>
+    
+<style type=text/css>
+  html, body {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%
+  }
+    #title{
+    float:top;
+    padding: 0;
+    margin: 0;
+    height: 10%;
+    width: 100%;
+    background-color: moccasin;
+    text-align: center;
+    font-family: sans-serif;
+        font-family: "Tahoma" sans-serif;
+        padding-top: 1px;
+
+  }
+    #map{
+    float:bottom;
+    padding: 0;
+    margin: 0;
+    height: 90%;
+    width: 100%;
+  }
+      #viewDiv{
+    float:left;
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 90%;
+  }
+    #legendDiv{
+        float:right;
+        padding:0;
+        height:100%;
+        width: 10%;
+        background-color: cornsilk;
+    }
+</style>
+
+<link rel="stylesheet" href="https://js.arcgis.com/4.7/esri/css/main.css">
+<script src="https://js.arcgis.com/4.7/"></script>
+    
+    <script>
+    require([
+        "esri/config",
+        "esri/core/urlUtils",
+        "esri/layers/WebTileLayer",
+        "esri/Map",
+        "esri/Basemap",
+        "esri/views/MapView",
+        "esri/layers/FeatureLayer",
+        "esri/layers/CSVLayer",
+        "esri/widgets/Legend",
+        "dojo/domReady!"
+    ], function(
+            esriConfig, urlUtils,WebTileLayer,Map,Basemap,MapView,FeatureLayer,CSVLayer,Legend)
+           {
+        esriConfig.request.corsEnabledServers.push("a.tile.thunderforest.com","b.tile.thunderforest.com","c.tile.thunderforest.com");
+        
+        var thunderForest = new WebTileLayer ({
+        urlTemplate:           "https://{subDomain}.tile.thunderforest.com/landscape/{level}/{col}/{row}.png?apikey=be6bfdad9cd24251af9b4fc32a98ef43",
+            subDomains: ["a","b","c"]
+        });
+        
+        var mybasemap = new Basemap ({
+            baseLayers: [thunderForest]
+        });
+        
+        var mymap = new Map ({
+            basemap: mybasemap
+        });
+        
+        var myview = new MapView ({
+            map: mymap, 
+            container: "viewDiv",
+            center:[-115.5, 45],
+            extent: {
+                xmin: -101, 
+                ymin: 34, 
+                xmax: -132, 
+                ymax: 49.5,
+                spatialReference:4326
+            }
+        });
+    
+        var counties = new FeatureLayer ({
+            portalItem:{
+                id:"3aef4297bba24eac8474a1e2d411e6a5"
+            }
+        });
+        mymap.add(counties);
+        var highways = new FeatureLayer ({
+            url:"http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Specialty/ESRI_StateCityHighway_USA/MapServer/0"
+        });
+        mymap.add(highways)
+        
+         var cities = new FeatureLayer ({
+             portalItem:{
+                 id: "5103831031044d5aa8dc2ccb8079c3f3"
+             }
+         });
+        mymap.add(cities);
+        
+        
+        
+      var url2 =             "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.csv";
+        esriConfig.request.corsEnabledServers.push(url2);
+        
+        var template = {
+            title: "Earthquake Info",
+            content: "Magnitude{mag} {type} hit {place} on {time}"
+        };
+        
+        var usgsFeed = new CSVLayer({
+            url: url2,
+            copyright: "USGS Earthquakes",
+            popupTemplate: template
+        });
+        
+        usgsFeed.renderer ={
+            type: "simple", //outcast a new "SimpleRenderer"
+            symbol:{
+                type:"simple-marker",
+                color: [238, 69, 0, 0.75],
+                size: 10,
+                outline:{
+                    width: 0.5,
+                    color: "white"
+            }
+        }
+        };
+        
+        mymap.add(usgsFeed);
+        var url = "https://dl.dropboxusercontent.com/s/9jis9tsqdvms7du/all_hour.csv?dl=0";
+        esriConfig.request.corsEnabledServers.push(url);
+        
+        var template = {
+            title: "Earthquake Info",
+            content: "Magnitude{mag} {type} hit {place} on {time}"
+        };
+        
+        var earthquakes = new CSVLayer({
+            url:url,
+            copyright: "USGS Earthquakes",
+            popupTemplate:template
+        });
+        
+        earthquakes.renderer ={
+            type:"simple", //outcast a new "SimpleRenderer"
+            symbol:{
+                type:"simple-marker",
+                color: "#621900",
+                size:10,
+                outline:{
+                    width:0.5,
+                    color:"white"
+                }
+            }
+        };
+        mymap.add(earthquakes);  
+        
+        var myLegend = new Legend({
+            view: myview,
+            layerInfos:[{
+                layer:earthquakes,
+                title: "Earthquakes"
+            },{
+                layer:usgsFeed,
+                title: "Earthquakes in the last 24 hours"
+            },{
+                layer:cities,
+                title: "Total population"
+            },{
+                layer:highways,
+                title: "Highways"
+            },{
+               layer:counties,
+                title: "Idaho population density" 
+            }],
+            container: "legendDiv"      
+        });
+    //myview.ui.add(myLegend,"bottom-right")
+    });
+    </script>
+    
+</head>
+    
+<body>
+<div id = "title"><h1>My map Test</h1></div>
+<div id = "map">
+<div id = "viewDiv"></div>
+<div id = "legendDiv"></div></div>
+</body>
+    
+</html>
